@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Petition - LegalBERT Advisor{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='analyze_petition.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="logo">
+            <h2>Legal<span style="color: #c3e3cb; font-weight: 700;">BERT</span> Advisor</h2>
+        </div>
+        <div class="user-info">
+            <span>Welcome, {{ session.name }}!</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </header>
+
+    <div class="dashboard-content">
+        <div class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li class="active">
+                    <a href="{{ url_for('analyze_petition_route') }}">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Analyze Petition</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="analysis-container">
+                <h2>Petition Analysis Tool</h2>
+                
+                <div class="upload-section">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="input-section">
+                            <div class="file-upload">
+                                <label for="petition_file">
+                                    <i class="fas fa-file-upload"></i>
+                                    <span>Upload PDF Petition</span>
+                                    <input type="file" id="petition_file" name="petition_file" accept=".pdf" class="d-none">
+                                </label>
+                                <div id="file-name" class="mt-2"></div>
+                                <div id="upload-status" class="upload-status"></div>
+                            </div>
+                            
+                            <div class="text-input-container">
+                                <label for="petition_text">Or Enter Petition Text</label>
+                                <textarea class="text-input" id="petition_text" name="petition_text" 
+                                    placeholder="Paste your petition text here..."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="submit-btn">
+                                <i class="fas fa-search"></i> Analyze Petition
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {% if summary or analysis_result %}
+                <div class="results-section">
+                    {% if summary %}
+                    <div class="summary-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-file-alt"></i> Petition Summary</h3>
+                        </div>
+                        <div class="summary-content">
+                            {{ summary | nl2br | safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if analysis_result %}
+                    <div class="analysis-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Analysis Results</h3>
+                        </div>
+                        <div class="analysis-content">
+                            {{ analysis_result | nl2br | safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('petition_file').addEventListener('change', function() {
+    const file = this.files[0];
+    const fileNameDiv = document.getElementById('file-name');
+    const uploadStatus = document.getElementById('upload-status');
+    
+    if (file) {
+        // Show file name
+        fileNameDiv.textContent = `Selected file: ${file.name}`;
+        
+        // Check if it's a PDF
+        if (file.type === 'application/pdf') {
+            // Show success message
+            uploadStatus.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> PDF uploaded successfully!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+        } else {
+            // Show error for non-PDF files
+            uploadStatus.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> Please select a PDF file.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+            this.value = ''; // Clear the file input
+            fileNameDiv.textContent = '';
+        }
+    } else {
+        fileNameDiv.textContent = '';
+        uploadStatus.innerHTML = '';
+    }
+});
+</script>
+{% endblock %}
